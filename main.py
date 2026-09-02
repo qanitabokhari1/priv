@@ -34,12 +34,11 @@ def get_filename(prompt, default="data.txt"):
         return default
     return user_input
 
-def random_date_in_last_year():
-    today = datetime.now()
-    start_date = today - timedelta(days=365)
-    random_days = random.randint(0, 364)
-    random_seconds = random.randint(0, 23*3600 + 3599)
-    commit_date = start_date + timedelta(days=random_days, seconds=random_seconds)
+def random_date_in_year(year):
+    start_date = datetime(year, 1, 1)
+    end_date = datetime.now() if year == datetime.now().year else datetime(year + 1, 1, 1)
+    date_range = int((end_date - start_date).total_seconds())
+    commit_date = start_date + timedelta(seconds=random.randint(0, date_range - 1))
     return commit_date
 
 def make_commit(date, repo_path, filename, message="graph-greener!"):
@@ -64,21 +63,24 @@ def main():
     parser.add_argument("--num", type=int, help="Number of commits to make (used with --yes)")
     parser.add_argument("--repo", type=str, help="Path to local git repository (used with --yes)")
     parser.add_argument("--file", type=str, help="Filename to modify for commits (used with --yes)")
+    parser.add_argument("--year", type=int, help="Calendar year for commit dates (used with --yes)")
     args = parser.parse_args()
 
     if args.yes:
         num_commits = args.num if args.num and args.num > 0 else 20
         repo_path = args.repo if args.repo else "."
         filename = args.file if args.file else "data.txt"
+        commit_year = args.year if args.year else datetime.now().year
     else:
         num_commits = get_positive_int("How many commits do you want to make", 20)
         repo_path = get_repo_path("Enter the path to your local git repository", ".")
         filename = get_filename("Enter the filename to modify for commits", "data.txt")
+        commit_year = datetime.now().year
 
     print(f"\nMaking {num_commits} commits in repo: {repo_path}\nModifying file: {filename}\n")
 
     for i in range(num_commits):
-        commit_date = random_date_in_last_year()
+        commit_date = random_date_in_year(commit_year)
         print(f"[{i+1}/{num_commits}] Committing at {commit_date.strftime('%Y-%m-%d %H:%M:%S')}")
         make_commit(commit_date, repo_path, filename)
 
